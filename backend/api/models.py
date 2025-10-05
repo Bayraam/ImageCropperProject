@@ -1,6 +1,6 @@
 from django.db import models
 
-# Create your models here.
+
 
 class CropConfig(models.Model):
     scale_down = models.FloatField(default=0.05)

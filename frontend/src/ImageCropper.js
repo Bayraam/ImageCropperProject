@@ -117,7 +117,7 @@ function ImageCropper() {
     setLoading(true);
     setError(null);
 
-    // Priprema crop koordinata: [x1, y1, x2, y2]
+    
     const coords = [
       Math.round(completedCrop.x),
       Math.round(completedCrop.y),
@@ -128,7 +128,7 @@ function ImageCropper() {
     console.log("Generate - Crop data:", completedCrop);
     console.log("Generate - Calculated coords:", coords);
 
-    // Proveri da li je crop validan
+   
     if (!completedCrop || !completedCrop.width || !completedCrop.height || 
         completedCrop.width < 10 || completedCrop.height < 10) {
       setError("Please select a valid crop area (minimum 10x10 pixels)");
@@ -140,7 +140,7 @@ function ImageCropper() {
     formData.append('image', selectedFile);
     formData.append('crops', JSON.stringify(coords));
     
-    // NOVO - Dodaj config_id ako je konfiguracija izabrana
+    
     if (selectedConfig) {
       formData.append('config_id', selectedConfig.id);
     }
@@ -156,7 +156,6 @@ function ImageCropper() {
     }
   };
 
-  // NOVE FUNKCIJE ZA KONFIGURACIJE
   const handleConfigSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
