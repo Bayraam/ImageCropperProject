@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Cropper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background-color: #fafafa;
+        }
+        .upload-area:hover {
+            border-color: #007bff;
+            background-color: #f0f8ff;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        .crop-controls {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .crop-controls label {
+            display: block;
+            margin: 10px 0 5px 0;
+            font-weight: bold;
+        }
+        .crop-controls input, .crop-controls select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .preview-area {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .buttons {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 10px;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .api-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 30px;
+        }
+        .api-info h3 {
+            margin-top: 0;
+        }
+        .endpoint {
+            margin: 5px 0;
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .image-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .image-wrapper {
+            position: relative;
+            display: inline-block;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        .original-image {
+            max-width: 100%;
+            max-height: 500px;
+            display: block;
+        }
+        .crop-overlay {
+            position: absolute;
+            border: 2px dashed #007bff;
+            background-color: rgba(0, 123, 255, 0.1);
+            display: none;
+        }
+        .coordinates-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .coord-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .coord-item label {
+            font-weight: bold;
+            margin: 0;
+        }
+        .coord-item span {
+            font-family: monospace;
+            background-color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ Image Cropper</h1>
+        
+        <div class="upload-area">
+            <h3>Upload Image</h3>
+            <input type="file" id="imageInput" accept="image/*">
+            <p>Choose an image file to crop</p>
+        </div>
+
+        <div class="image-container" id="imageContainer" style="display: none;">
+            <h3>Click and drag to select crop area</h3>
+            <div class="image-wrapper" id="imageWrapper">
+                <img id="originalImage" class="original-image">
+                <div class="crop-overlay" id="cropOverlay"></div>
+            </div>
+        </div>
+
+        <div class="crop-controls" id="cropControls" style="display: none;">
+            <h3>Crop Settings</h3>
+            <div class="coordinates-display">
+                <div class="coord-item">
+                    <label>X1 (left):</label>
+                    <span id="cropX1Display">0</span>
+                </div>
+                <div class="coord-item">
+                    <label>Y1 (top):</label>
+                    <span id="cropY1Display">0</span>
+                </div>
+                <div class="coord-item">
+                    <label>X2 (right):</label>
+                    <span id="cropX2Display">0</span>
+                </div>
+                <div class="coord-item">
+                    <label>Y2 (bottom):</label>
+                    <span id="cropY2Display">0</span>
+                </div>
+            </div>
+            <label for="scaleDown">Scale Down Factor:</label>
+            <input type="number" id="scaleDown" value="0.05" min="0.01" max="0.25" step="0.01">
+            
+            <label for="logoPosition">Logo Position:</label>
+            <select id="logoPosition">
+                <option value="top-left">Top Left</option>
+                <option value="top-right">Top Right</option>
+                <option value="bottom-left">Bottom Left</option>
+                <option value="bottom-right" selected>Bottom Right</option>
+                <option value="center">Center</option>
+            </select>
+        </div>
+
+        <div class="buttons">
+            <button class="btn" id="previewBtn" disabled>Preview Crop</button>
+            <button class="btn" id="generateBtn" disabled>Generate Final</button>
+        </div>
+
+        <div class="preview-area">
+            <h3>Preview</h3>
+            <img id="previewImage" class="preview-image" style="display: none;">
+        </div>
+
+        <div class="api-info">
+            <h3>API Endpoints</h3>
+            <div class="endpoint">POST /api/image/preview - Preview cropped image</div>
+            <div class="endpoint">POST /api/image/generate - Generate final cropped image</div>
+            <div class="endpoint">POST /api/config - Create crop configuration</div>
+            <div class="endpoint">PUT /api/config/{id} - Update crop configuration</div>
+            <div class="endpoint">GET /admin/ - Django admin panel</div>
+        </div>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const imageContainer = document.getElementById('imageContainer');
+        const imageWrapper = document.getElementById('imageWrapper');
+        const originalImage = document.getElementById('originalImage');
+        const cropOverlay = document.getElementById('cropOverlay');
+        const cropControls = document.getElementById('cropControls');
+        const cropX1Display = document.getElementById('cropX1Display');
+        const cropY1Display = document.getElementById('cropY1Display');
+        const cropX2Display = document.getElementById('cropX2Display');
+        const cropY2Display = document.getElementById('cropY2Display');
+        const scaleDown = document.getElementById('scaleDown');
+        const logoPosition = document.getElementById('logoPosition');
+        const previewBtn = document.getElementById('previewBtn');
+        const generateBtn = document.getElementById('generateBtn');
+        const previewImage = document.getElementById('previewImage');
+
+        let currentImage = null;
+        let isDrawing = false;
+        let startX = 0;
+        let startY = 0;
+        let cropCoords = { x1: 0, y1: 0, x2: 0, y2: 0 };
+
+
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                currentImage = file;
+                
+                // Load and display image
+                const img = new Image();
+                img.onload = function() {
+                    originalImage.src = img.src;
+                    imageContainer.style.display = 'block';
+                    cropControls.style.display = 'block';
+                    previewBtn.disabled = false;
+                    generateBtn.disabled = false;
+                    
+                    // Reset crop area
+                    cropCoords = { x1: 0, y1: 0, x2: img.width, y2: img.height };
+                    updateCropDisplay();
+                };
+                img.src = URL.createObjectURL(file);
+            }
+        });
+
+        // Mouse events for crop selection
+        imageWrapper.addEventListener('mousedown', function(e) {
+            if (!currentImage) return;
+            
+            isDrawing = true;
+            const rect = imageWrapper.getBoundingClientRect();
+            const scaleX = originalImage.naturalWidth / originalImage.clientWidth;
+            const scaleY = originalImage.naturalHeight / originalImage.clientHeight;
+            
+            startX = (e.clientX - rect.left) * scaleX;
+            startY = (e.clientY - rect.top) * scaleY;
+            
+            cropCoords.x1 = startX;
+            cropCoords.y1 = startY;
+            cropCoords.x2 = startX;
+            cropCoords.y2 = startY;
+            
+            updateCropOverlay();
+            updateCropDisplay();
+        });
+
+        imageWrapper.addEventListener('mousemove', function(e) {
+            if (!isDrawing || !currentImage) return;
+            
+            const rect = imageWrapper.getBoundingClientRect();
+            const scaleX = originalImage.naturalWidth / originalImage.clientWidth;
+            const scaleY = originalImage.naturalHeight / originalImage.clientHeight;
+            
+            const currentX = (e.clientX - rect.left) * scaleX;
+            const currentY = (e.clientY - rect.top) * scaleY;
+            
+            cropCoords.x2 = Math.max(0, Math.min(currentX, originalImage.naturalWidth));
+            cropCoords.y2 = Math.max(0, Math.min(currentY, originalImage.naturalHeight));
+            
+            // Ensure x1,y1 is top-left and x2,y2 is bottom-right
+            if (cropCoords.x2 < cropCoords.x1) {
+                [cropCoords.x1, cropCoords.x2] = [cropCoords.x2, cropCoords.x1];
+            }
+            if (cropCoords.y2 < cropCoords.y1) {
+                [cropCoords.y1, cropCoords.y2] = [cropCoords.y2, cropCoords.y1];
+            }
+            
+            updateCropOverlay();
+            updateCropDisplay();
+        });
+
+        imageWrapper.addEventListener('mouseup', function(e) {
+            isDrawing = false;
+        });
+
+        function updateCropOverlay() {
+            if (!currentImage) return;
+            
+            const scaleX = originalImage.clientWidth / originalImage.naturalWidth;
+            const scaleY = originalImage.clientHeight / originalImage.naturalHeight;
+            
+            const overlayX = cropCoords.x1 * scaleX;
+            const overlayY = cropCoords.y1 * scaleY;
+            const overlayWidth = (cropCoords.x2 - cropCoords.x1) * scaleX;
+            const overlayHeight = (cropCoords.y2 - cropCoords.y1) * scaleY;
+            
+            cropOverlay.style.left = overlayX + 'px';
+            cropOverlay.style.top = overlayY + 'px';
+            cropOverlay.style.width = overlayWidth + 'px';
+            cropOverlay.style.height = overlayHeight + 'px';
+            cropOverlay.style.display = 'block';
+        }
+
+        function updateCropDisplay() {
+            cropX1Display.textContent = Math.round(cropCoords.x1);
+            cropY1Display.textContent = Math.round(cropCoords.y1);
+            cropX2Display.textContent = Math.round(cropCoords.x2);
+            cropY2Display.textContent = Math.round(cropCoords.y2);
+        }
+
+        previewBtn.addEventListener('click', function() {
+            if (!currentImage) return;
+            
+            console.log('Sending preview request...');
+            console.log('Image file:', currentImage);
+            console.log('Crop coords:', cropCoords);
+            
+            const formData = new FormData();
+            formData.append('image', currentImage);
+            formData.append('crops', `[${Math.round(cropCoords.x1)}, ${Math.round(cropCoords.y1)}, ${Math.round(cropCoords.x2)}, ${Math.round(cropCoords.y2)}]`);
+
+            console.log('FormData contents:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+
+            fetch('/api/image/preview', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.image) {
+                    previewImage.src = 'data:image/png;base64,' + data.image;
+                    previewImage.style.display = 'block';
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error previewing image: ' + error.message);
+            });
+        });
+
+        generateBtn.addEventListener('click', function() {
+            if (!currentImage) return;
+            
+            const formData = new FormData();
+            formData.append('image', currentImage);
+            formData.append('crops', `[${Math.round(cropCoords.x1)}, ${Math.round(cropCoords.y1)}, ${Math.round(cropCoords.x2)}, ${Math.round(cropCoords.y2)}]`);
+
+            fetch('/api/image/generate', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.image) {
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.href = 'data:image/png;base64,' + data.image;
+                    link.download = 'cropped_image.png';
+                    link.click();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error generating image: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>
+    
+
+

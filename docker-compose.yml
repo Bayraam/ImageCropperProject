@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # Backend Django servis
+  backend:
+    build: ./backend
+    container_name: imagecropper_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/media:/app/media  # Persistiraj uploaded fajlove
+    environment:
+      - DJANGO_SETTINGS_MODULE=imagecropper.settings
+    networks:
+      - imagecropper_network
+    restart: unless-stopped
+
+  # Frontend React servis
+  frontend:
+    build: ./frontend
+    container_name: imagecropper_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://backend:8000  # Koristi Docker service name
+    networks:
+      - imagecropper_network
+    restart: unless-stopped
+
+networks:
+  imagecropper_network:
+    driver: bridge
+
+volumes:
+  media_data:
