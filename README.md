@@ -443,10 +443,6 @@ MIT License - slobodno koristi za bilo koju svrhu.
 ## 📞 Support
 
 Za pitanja ili probleme:
-- **Email**: support@example.com
-- **Issues**: GitHub Issues
-- **Documentation**: Ovaj README
+- **Email**: harun.bajramovicvisoko@gmail.com
 
 ---
-
-**Napomena**: Ovaj projekat je kreiran za evaluaciju full-stack development vještina. Svi kod je dokumentovan i objašnjen za lakše razumijevanje tokom intervjua.
