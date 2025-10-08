@@ -127,6 +127,11 @@ class CropConfigView(APIView):
         logo_position = request.data.get('logoPosition', 'bottom-right')
         logo_image = request.FILES.get('logoImage')
         
+        # Convert scale_down to float to avoid TypeError
+        try:
+            scale_down = float(scale_down)
+        except (ValueError, TypeError):
+            scale_down = 0.05
         
         if scale_down > 0.25:
             return Response({"error": "scaleDown cannot exceed 0.25"}, status=status.HTTP_400_BAD_REQUEST)
@@ -249,9 +254,22 @@ class CropConfigUpdateView(APIView):
         logo_position = request.data.get('logoPosition', config.logo_position)
         logo_image = request.FILES.get('logoImage', config.logo_image)
         
+        # Convert scale_down to float to avoid TypeError
+        try:
+            scale_down = float(scale_down)
+        except (ValueError, TypeError):
+            scale_down = config.scale_down
+        
         if scale_down > 0.25:
             return Response({"error": "scaleDown cannot exceed 0.25"}, status=status.HTTP_400_BAD_REQUEST)
         
+
+        
+
+
+
+
+
         config.scale_down = scale_down
         config.logo_position = logo_position
         if logo_image:
